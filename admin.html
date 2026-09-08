@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The 50 BAZAR - Super Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg-color: #060911;
+      --card-bg: rgba(15, 22, 36, 0.95);
+      --border: rgba(255, 255, 255, 0.1);
+      --accent: #38BDF8;
+      --green: #10B981;
+      --red: #EF4444;
+      --yellow: #EAB308;
+      --text: #FFFFFF;
+      --text-sub: #94A3B8;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background: var(--bg-color); color: var(--text); padding: 1.5rem; min-height: 100vh; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .brand { font-size: 1.4rem; font-weight: 800; color: var(--accent); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 1rem 1.2rem;
+      border-radius: 12px;
+    }
+    .stat-card .title { font-size: 0.78rem; color: var(--text-sub); text-transform: uppercase; }
+    .stat-card .num { font-size: 1.5rem; font-weight: 800; margin-top: 4px; }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 1.5rem 0 0.8rem 0;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow-x: auto;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th { background: rgba(255, 255, 255, 0.04); color: var(--text-sub); font-size: 0.75rem; text-transform: uppercase; }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: inline-block;
+    }
+    .badge-proc { background: rgba(234, 179, 8, 0.2); color: var(--yellow); }
+    .badge-succ { background: rgba(16, 185, 129, 0.2); color: var(--green); }
+    .badge-reje { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-approve { background: var(--green); color: #000; }
+    .btn-reject { background: var(--red); color: #FFF; margin-left: 4px; }
+    .btn-refresh { background: var(--accent); color: #000; }
+    
+    code {
+      background: rgba(255,255,255,0.06);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: #38BDF8;
+    }
+
+    .verify-box {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.4rem;
+      margin-bottom: 2rem;
+    }
+    .verify-box h3 {
+      font-size: 1.05rem;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .form-group { margin-bottom: 0.9rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .form-control {
+      width: 100%;
+      padding: 11px 13px;
+      background: #1E293B;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+    }
+    textarea.form-control {
+      min-height: 160px;
+      resize: vertical;
+      font-family: monospace;
+      line-height: 1.5;
+    }
+    .btn-run {
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-run:hover { filter: brightness(1.1); }
+    .match-result {
+      margin-top: 1rem;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .match-result.success { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #10B981; }
+    .match-result.fail { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4); color: #EF4444; }
+    .format-hint {
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      background: rgba(56,189,248,0.08);
+      border: 1px solid rgba(56,189,248,0.25);
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="brand">⚡ The 50 BAZAR Admin</div>
+    <button class="btn btn-refresh" onclick="loadAllData()">🔄 Refresh</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="title">Pending Withdrawals</div>
+      <div class="num" style="color:var(--yellow);" id="statPendingCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="title">Total Claims</div>
+      <div class="num" style="color:var(--accent);" id="statClaimsCount">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="title">Pending Claims</div>
+      <div class="num" style="color:var(--yellow);" id="statPendingClaims">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="title">Payment Methods</div>
+      <div class="num" style="color:var(--green);" id="statPaymentCount">0</div>
+    </div>
+  </div>
+
+  <!-- VERIFICATION BOX -->
+  <div class="section-title">🔍 Order Verification</div>
+  <div class="verify-box">
+    <h3>Paste Order ID + Date + Amount (one per line)</h3>
+    
+    <div class="format-hint">
+      Format example:<br>
+      <code>OD3029104829100000 12/01/2026 4500</code><br>
+      <code>OD3029104829100001 12/01/2026 1200</code><br>
+      OrderID → space → Date (DD/MM/YYYY or YYYY-MM-DD) → space → Amount<br>
+      <b>Note:</b> Amount match ab soft hai (difference 50 tak allowed)
+    </div>
+
+    <div class="form-group">
+      <label>Orders</label>
+      <textarea class="form-control" id="adminOrdersBox" placeholder="OD3029104829100000 12/01/2026 4500
+OD3029104829100001 12/01/2026 1200"></textarea>
+    </div>
+
+    <button class="btn-run" onclick="runOrderMatch()">▶ Run Match</button>
+
+    <div id="matchResultBox" class="match-result"></div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="section-title">💳 Withdrawal Requests</div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Request ID</th>
+          <th>Coins</th>
+          <th>Amount (₹)</th>
+          <th>Payment Details</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="withdrawalsTable">
+        <tr><td colspan="7" style="text-align:center; padding: 20px;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CLAIMS -->
+  <div class="section-title">🎁 Order Claims</div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Store</th>
+          <th>Order ID</th>
+          <th>Date</th>
+          <th>Amount (₹)</th>
+          <th>Coins</th>
+          <th>Status</th>
+          <th>Logged At</th>
+        </tr>
+      </thead>
+      <tbody id="claimsTable">
+        <tr><td colspan="8" style="text-align:center; padding: 20px;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAYMENT METHODS -->
+  <div class="section-title">⚙️ Payment Methods</div>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Details</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="paymentTable">
+        <tr><td colspan="4" style="text-align:center; padding: 20px;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://wwbgoccfguemzhefpeiu.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_oXBQgh0OBovBX4la3pLyfw_IIhfijBE";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadAllData() {
+      fetchWithdrawals();
+      fetchClaims();
+      fetchPaymentDetails();
+    }
+
+    async function fetchWithdrawals() {
+      const { data, error } = await supabaseClient
+        .from('withdrawals')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('withdrawalsTable');
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px;">No withdrawals found.</td></tr>`;
+        document.getElementById('statPendingCount').innerText = "0";
+        return;
+      }
+
+      const pendingCount = data.filter(d => d.status === 'Processing').length;
+      document.getElementById('statPendingCount').innerText = pendingCount;
+
+      tbody.innerHTML = data.map(item => `
+        <tr>
+          <td><b>${item.id}</b></td>
+          <td style="color:var(--yellow); font-weight:700;">${item.coins}</td>
+          <td style="color:var(--green); font-weight:700;">₹${item.rupees}</td>
+          <td><code>${item.details}</code></td>
+          <td>
+            <span class="badge ${item.status === 'Processing' ? 'badge-proc' : item.status === 'Success' ? 'badge-succ' : 'badge-reje'}">
+              ${item.status}
+            </span>
+          </td>
+          <td>${new Date(item.created_at).toLocaleString()}</td>
+          <td>
+            ${item.status === 'Processing' ? `
+              <button class="btn btn-approve" onclick="updateStatus('${item.id}', 'Success')">Approve</button>
+              <button class="btn btn-reject" onclick="updateStatus('${item.id}', 'Rejected')">Reject</button>
+            ` : `<span style="color:var(--text-sub); font-size: 0.75rem;">Done</span>`}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function updateStatus(id, newStatus) {
+      if (!confirm(`Mark ${id} as ${newStatus}?`)) return;
+
+      const { error } = await supabaseClient
+        .from('withdrawals')
+        .update({ status: newStatus })
+        .eq('id', id);
+
+      if (error) {
+        alert("Update failed");
+      } else {
+        fetchWithdrawals();
+      }
+    }
+
+    async function fetchClaims() {
+      const { data, error } = await supabaseClient
+        .from('claims')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('claimsTable');
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:20px;">No claims yet.</td></tr>`;
+        document.getElementById('statClaimsCount').innerText = "0";
+        document.getElementById('statPendingClaims').innerText = "0";
+        return;
+      }
+
+      document.getElementById('statClaimsCount').innerText = data.length;
+      const pending = data.filter(d => d.status === 'Processing').length;
+      document.getElementById('statPendingClaims').innerText = pending;
+
+      tbody.innerHTML = data.map(item => `
+        <tr>
+          <td>#${item.id}</td>
+          <td><b>${item.store}</b></td>
+          <td><code>${item.order_id}</code></td>
+          <td>${item.order_date}</td>
+          <td>₹${Number(item.amount).toFixed(2)}</td>
+          <td style="color:var(--yellow); font-weight:700;">+${item.coins}</td>
+          <td>
+            <span class="badge ${item.status === 'Processing' ? 'badge-proc' : item.status === 'Approved' ? 'badge-succ' : 'badge-reje'}">
+              ${item.status || 'Processing'}
+            </span>
+          </td>
+          <td>${new Date(item.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function fetchPaymentDetails() {
+      const { data, error } = await supabaseClient
+        .from('payment_details')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('paymentTable');
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px;">No payment details.</td></tr>`;
+        document.getElementById('statPaymentCount').innerText = "0";
+        return;
+      }
+
+      document.getElementById('statPaymentCount').innerText = data.length;
+
+      tbody.innerHTML = data.map(item => `
+        <tr>
+          <td>#${item.id}</td>
+          <td><b>${item.type}</b></td>
+          <td><code>${item.details}</code></td>
+          <td>${new Date(item.created_at).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+
+    function parseDate(str) {
+      str = str.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+
+      if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(str)) {
+        const [d, m, y] = str.split('/');
+        return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+      }
+      return null;
+    }
+
+    async function runOrderMatch() {
+      const rawText = document.getElementById('adminOrdersBox').value.trim();
+      const resultBox = document.getElementById('matchResultBox');
+
+      if (!rawText) {
+        resultBox.style.display = 'block';
+        resultBox.className = 'match-result fail';
+        resultBox.innerHTML = '❌ Box is empty';
+        return;
+      }
+
+      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const adminEntries = [];
+
+      for (let line of lines) {
+        const parts = line.split(/\s+/);
+        if (parts.length < 3) {
+          resultBox.style.display = 'block';
+          resultBox.className = 'match-result fail';
+          resultBox.innerHTML = `❌ Bad format: <code>${line}</code>`;
+          return;
+        }
+
+        const amountStr = parts[parts.length - 1];
+        const dateStr = parts[parts.length - 2];
+        const orderId = parts.slice(0, parts.length - 2).join(' ');
+
+        const amount = parseFloat(amountStr);
+        const isoDate = parseDate(dateStr);
+
+        if (!orderId || isNaN(amount) || amount <= 0 || !isoDate) {
+          resultBox.style.display = 'block';
+          resultBox.className = 'match-result fail';
+          resultBox.innerHTML = `❌ Parse error: <code>${line}</code>`;
+          return;
+        }
+
+        adminEntries.push({ order_id: orderId, order_date: isoDate, amount: amount });
+      }
+
+      resultBox.style.display = 'block';
+      resultBox.className = 'match-result';
+      resultBox.innerHTML = '⏳ Matching...';
+
+      const orderIds = adminEntries.map(e => e.order_id);
+
+      const { data: pendingClaims, error } = await supabaseClient
+        .from('claims')
+        .select('*')
+        .eq('status', 'Processing')
+        .in('order_id', orderIds);
+
+      if (error) {
+        resultBox.className = 'match-result fail';
+        resultBox.innerHTML = '❌ DB Error: ' + error.message;
+        return;
+      }
+
+      if (!pendingClaims || pendingClaims.length === 0) {
+        resultBox.className = 'match-result fail';
+        resultBox.innerHTML = '❌ No pending claims found for these Order IDs';
+        return;
+      }
+
+      let approvedIds = [];
+      let rejectedIds = [];
+      let totalCoinsCredited = 0;
+      let details = [];
+
+      for (let admin of adminEntries) {
+        const claim = pendingClaims.find(c => c.order_id.toLowerCase() === admin.order_id.toLowerCase());
+
+        if (!claim) {
+          rejectedIds.push(admin.order_id);
+          details.push(`${admin.order_id} → Not found in Processing`);
+          continue;
+        }
+
+        // Soft amount match (difference up to 50 allowed)
+        const amountDiff = Math.abs(Number(claim.amount) - admin.amount);
+        const dateMatch = claim.order_date === admin.order_date;
+
+        // Approve if order_id matches + (date matches OR amount is close)
+        if (dateMatch || amountDiff <= 50) {
+          approvedIds.push(claim.order_id);
+          totalCoinsCredited += Number(claim.coins);
+          details.push(`${claim.order_id} → ✅ +${claim.coins} coins (diff: ${amountDiff.toFixed(2)})`);
+        } else {
+          rejectedIds.push(claim.order_id);
+          details.push(`${claim.order_id} → ❌ Date/Amount mismatch (claimed: ${claim.amount}, given: ${admin.amount})`);
+        }
+      }
+
+      if (approvedIds.length > 0) {
+        const { error: upErr } = await supabaseClient
+          .from('claims')
+          .update({ status: 'Approved' })
+          .in('order_id', approvedIds)
+          .eq('status', 'Processing');
+
+        if (upErr) {
+          resultBox.className = 'match-result fail';
+          resultBox.innerHTML = '❌ Approve failed: ' + upErr.message;
+          return;
+        }
+      }
+
+      if (rejectedIds.length > 0) {
+        await supabaseClient
+          .from('claims')
+          .update({ status: 'Rejected' })
+          .in('order_id', rejectedIds)
+          .eq('status', 'Processing');
+      }
+
+      await fetchClaims();
+
+      if (approvedIds.length > 0 && rejectedIds.length === 0) {
+        resultBox.className = 'match-result success';
+        resultBox.innerHTML = `✅ SUCCESS<br>
+          Approved: <b>${approvedIds.join(', ')}</b><br>
+          Coins Credited: <b>+${totalCoinsCredited}</b><br>
+          ${details.join('<br>')}`;
+      } else if (approvedIds.length > 0) {
+        resultBox.className = 'match-result success';
+        resultBox.innerHTML = `⚠️ Partial<br>
+          ✅ Approved: <b>${approvedIds.join(', ')}</b> (+${totalCoinsCredited} coins)<br>
+          ❌ Rejected: <b>${rejectedIds.join(', ')}</b><br>
+          ${details.join('<br>')}`;
+      } else {
+        resultBox.className = 'match-result fail';
+        resultBox.innerHTML = `❌ REJECTED<br>
+          ${details.join('<br>')}`;
+      }
+    }
+
+    loadAllData();
+  </script>
+</body>
+</html>

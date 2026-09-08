@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login / Signup - The 50 BAZAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg-color: #060911;
+      --card-bg: rgba(15, 22, 36, 0.92);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #FFFFFF;
+      --text-sub: #94A3B8;
+      --accent-blue: #38BDF8;
+      --accent-green: #10B981;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.2rem;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.14) 0%, transparent 42%),
+        radial-gradient(circle at 90% 90%, rgba(236, 72, 153, 0.12) 0%, transparent 42%);
+      overflow-x: hidden;
+    }
+
+    .auth-container {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 22px;
+      padding: 2rem 1.6rem;
+      width: 100%;
+      max-width: 420px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.55);
+      animation: slideUp 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      opacity: 0;
+      transform: translateY(28px);
+    }
+
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 1.6rem;
+    }
+
+    .brand-logo-img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      margin-bottom: 0.5rem;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+      animation: pulse 2.8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 18px rgba(56, 189, 248, 0.22); }
+      50% { box-shadow: 0 0 28px rgba(56, 189, 248, 0.4); }
+    }
+
+    .brand-name {
+      font-size: 1.45rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FF6B00, #FF007A, #9D00FF);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.4px;
+    }
+
+    .brand-sub {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 1.4rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 5px;
+      border-radius: 12px;
+    }
+
+    .tab-btn {
+      padding: 11px;
+      border: none;
+      background: transparent;
+      color: var(--text-sub);
+      font-weight: 700;
+      font-size: 0.86rem;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #38BDF8, #2563EB);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35);
+    }
+
+    .form-group {
+      margin-bottom: 1.05rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-bottom: 0.35rem;
+    }
+
+    .password-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 13px 14px;
+      background: #1E293B;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 11px;
+      color: #FFF;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      user-select: none;
+      opacity: 0.7;
+    }
+
+    .toggle-password:hover {
+      opacity: 1;
+    }
+
+    .forgot-pass-link {
+      display: block;
+      text-align: right;
+      font-size: 0.76rem;
+      color: var(--accent-blue);
+      text-decoration: none;
+      margin-top: 6px;
+      cursor: pointer;
+    }
+
+    .forgot-pass-link:hover {
+      text-decoration: underline;
+    }
+
+    .btn-action {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #38BDF8, #2563EB);
+      color: #FFF;
+      border: none;
+      border-radius: 11px;
+      font-weight: 800;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 0.4rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-action:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .btn-action:active {
+      transform: translateY(0);
+    }
+
+    .btn-action:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .error-msg {
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid #EF4444;
+      color: #F87171;
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: 0.78rem;
+      margin-bottom: 1rem;
+      display: none;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-5px); }
+      40%, 80% { transform: translateX(5px); }
+    }
+
+    .password-hint {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      margin-top: 5px;
+    }
+
+    .success-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-80px);
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff;
+      padding: 12px 22px;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+      z-index: 999;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .success-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 480px) {
+      .auth-container { padding: 1.6rem 1.2rem; }
+      .brand-name { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="success-toast" id="successToast">Account created successfully</div>
+
+  <div class="auth-container">
+    <div class="brand-header">
+      <img src="logo.jpg.jpeg" alt="Logo" class="brand-logo-img">
+      <div class="brand-name">The 50 BAZAR</div>
+      <p class="brand-sub">Login or create account to access rewards</p>
+    </div>
+
+    <div class="auth-tabs" id="authTabsHeader">
+      <button class="tab-btn active" id="loginTab" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" id="signupTab" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" class="form-control" id="loginEmail" placeholder="e.g. user@gmail.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="password-wrapper">
+          <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+          <span class="toggle-password" onclick="togglePasswordVisibility('loginPassword', this)">👁️</span>
+        </div>
+        <a class="forgot-pass-link" onclick="switchTab('forgot')">Forgot Password?</a>
+      </div>
+      <button type="submit" class="btn-action" id="loginBtn">Login to Portal ➔</button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signupForm" style="display: none;" onsubmit="handleSignup(event)">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" class="form-control" id="signupName" placeholder="e.g. Rahul Kumar" required minlength="2" pattern="[A-Za-z\s]{2,50}" title="Only letters and spaces allowed">
+      </div>
+      <div class="form-group">
+        <label>Mobile Number</label>
+        <input type="tel" class="form-control" id="signupMobile" placeholder="e.g. 9876543210" pattern="[6-9][0-9]{9}" required title="Enter a valid 10-digit Indian mobile number">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" class="form-control" id="signupEmail" placeholder="e.g. user@gmail.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="password-wrapper">
+          <input type="password" class="form-control" id="signupPassword" placeholder="••••••••" required>
+          <span class="toggle-password" onclick="togglePasswordVisibility('signupPassword', this)">👁️</span>
+        </div>
+        <div class="password-hint">Minimum 6 characters with at least one number</div>
+      </div>
+      <div class="form-group">
+        <label>Security Question (For Password Reset)</label>
+        <select class="form-control" id="signupQuestion" required>
+          <option value="">Select a security question</option>
+          <option value="pet">What is your first pet's name?</option>
+          <option value="school">What was the name of your first school?</option>
+          <option value="city">In which city were you born?</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Security Answer</label>
+        <input type="text" class="form-control" id="signupAnswer" placeholder="Your Answer" required>
+      </div>
+      <button type="submit" class="btn-action" id="signupBtn">Create Account ➔</button>
+    </form>
+
+    <!-- FORGOT / RESET PASSWORD FORM -->
+    <form id="forgotForm" style="display: none;" onsubmit="handlePasswordReset(event)">
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" class="form-control" id="resetEmail" placeholder="e.g. user@gmail.com" required>
+      </div>
+      <button type="button" class="btn-action" id="verifyEmailBtn" style="margin-bottom: 1rem; background: #334155;" onclick="fetchSecurityQuestion()">Verify Email ➔</button>
+
+      <div id="resetQuestionSection" style="display: none;">
+        <div class="form-group">
+          <label>Security Question</label>
+          <input type="text" class="form-control" id="displayQuestion" readonly style="opacity: 0.85; background: #0f172a;">
+        </div>
+        <div class="form-group">
+          <label>Your Security Answer</label>
+          <input type="text" class="form-control" id="resetAnswer" placeholder="Enter your answer" required>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <div class="password-wrapper">
+            <input type="password" class="form-control" id="newPassword" placeholder="••••••••" required>
+            <span class="toggle-password" onclick="togglePasswordVisibility('newPassword', this)">👁️</span>
+          </div>
+        </div>
+        <button type="submit" class="btn-action" id="resetBtn">Reset Password & Login ➔</button>
+      </div>
+      <a class="forgot-pass-link" style="text-align: center; margin-top: 15px;" onclick="switchTab('login')">Back to Login</a>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://wwbgoccfguemzhefpeiu.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_oXBQgh0OBovBX4la3pLyfw_IIhfijBE";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    function togglePasswordVisibility(inputId, icon) {
+      const input = document.getElementById(inputId);
+      if (input.type === "password") {
+        input.type = "text";
+        icon.innerText = "🙈";
+      } else {
+        input.type = "password";
+        icon.innerText = "👁️";
+      }
+    }
+
+    function showError(msg) {
+      const err = document.getElementById('errorMsg');
+      err.innerText = msg;
+      err.style.display = 'block';
+    }
+
+    function hideError() {
+      document.getElementById('errorMsg').style.display = 'none';
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('successToast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    function switchTab(type) {
+      hideError();
+      const loginForm = document.getElementById('loginForm');
+      const signupForm = document.getElementById('signupForm');
+      const forgotForm = document.getElementById('forgotForm');
+      const tabsHeader = document.getElementById('authTabsHeader');
+
+      if (type === 'login') {
+        tabsHeader.style.display = 'grid';
+        document.getElementById('loginTab').classList.add('active');
+        document.getElementById('signupTab').classList.remove('active');
+        loginForm.style.display = 'block';
+        signupForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+      } else if (type === 'signup') {
+        tabsHeader.style.display = 'grid';
+        document.getElementById('signupTab').classList.add('active');
+        document.getElementById('loginTab').classList.remove('active');
+        signupForm.style.display = 'block';
+        loginForm.style.display = 'none';
+        forgotForm.style.display = 'none';
+      } else if (type === 'forgot') {
+        tabsHeader.style.display = 'none';
+        loginForm.style.display = 'none';
+        signupForm.style.display = 'none';
+        forgotForm.style.display = 'block';
+      }
+    }
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideError();
+      const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+
+      if (!isValidEmail(email)) {
+        showError("Please enter a valid email address.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Logging in...";
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+      if (error) {
+        showError(error.message.includes("Invalid") ? "Invalid email or password." : error.message);
+        btn.disabled = false;
+        btn.innerText = "Login to Portal ➔";
+      } else {
+        window.location.href = 'shop.html';
+      }
+    }
+
+    async function handleSignup(e) {
+      e.preventDefault();
+      hideError();
+
+      const name = document.getElementById('signupName').value.trim();
+      const phone = document.getElementById('signupMobile').value.trim();
+      const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+      const password = document.getElementById('signupPassword').value;
+      const questionSelect = document.getElementById('signupQuestion');
+      const questionText = questionSelect.options[questionSelect.selectedIndex].text;
+      const answer = document.getElementById('signupAnswer').value.trim().toLowerCase();
+      const btn = document.getElementById('signupBtn');
+
+      if (name.length < 2 || !/^[A-Za-z\s]+$/.test(name)) {
+        showError("Name must contain only letters and be at least 2 characters.");
+        return;
+      }
+      if (!/^[6-9]\d{9}$/.test(phone)) {
+        showError("Enter a valid 10-digit Indian mobile number.");
+        return;
+      }
+      if (!isValidEmail(email)) {
+        showError("Please enter a valid email address.");
+        return;
+      }
+      if (password.length < 6 || !/\d/.test(password)) {
+        showError("Password must be at least 6 characters and include one number.");
+        return;
+      }
+      if (!questionSelect.value || !answer) {
+        showError("Please select a security question and answer.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Creating account...";
+
+      const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: { full_name: name, phone: phone }
+        }
+      });
+
+      if (error) {
+        showError(error.message);
+        btn.disabled = false;
+        btn.innerText = "Create Account ➔";
+        return;
+      }
+
+      if (data.user) {
+        await supabaseClient.from('profiles').upsert([{
+          id: data.user.id,
+          full_name: name,
+          phone: phone,
+          email: email,
+          security_question: questionText,
+          security_answer: answer
+        }]);
+      }
+
+      showToast("Account created successfully");
+      switchTab('login');
+      document.getElementById('loginEmail').value = email;
+      document.getElementById('signupForm').reset();
+      btn.disabled = false;
+      btn.innerText = "Create Account ➔";
+    }
+
+    async function fetchSecurityQuestion() {
+      hideError();
+      const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+      const btn = document.getElementById('verifyEmailBtn');
+
+      if (!isValidEmail(email)) {
+        showError("Please enter a valid email address.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Checking...";
+
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('*')
+        .ilike('email', email)
+        .limit(1);
+
+      btn.disabled = false;
+      btn.innerText = "Verify Email ➔";
+
+      if (error || !data || data.length === 0) {
+        showError("No user found with this email address.");
+        return;
+      }
+
+      const user = data[0];
+      document.getElementById('displayQuestion').value = user.security_question;
+      document.getElementById('resetQuestionSection').style.display = 'block';
+    }
+
+    async function handlePasswordReset(e) {
+      e.preventDefault();
+      hideError();
+
+      const email = document.getElementById('resetEmail').value.trim().toLowerCase();
+      const answer = document.getElementById('resetAnswer').value.trim().toLowerCase();
+      const newPassword = document.getElementById('newPassword').value;
+      const btn = document.getElementById('resetBtn');
+
+      if (newPassword.length < 6 || !/\d/.test(newPassword)) {
+        showError("Password must be at least 6 characters and include one number.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerText = "Resetting Password...";
+
+      // Call Database Stored Procedure
+      const { data, error } = await supabaseClient.rpc('reset_user_password', {
+        user_email: email,
+        user_answer: answer,
+        new_plain_password: newPassword
+      });
+
+      if (error) {
+        showError("Server Error: " + error.message);
+        btn.disabled = false;
+        btn.innerText = "Reset Password & Login ➔";
+        return;
+      }
+
+      if (!data.success) {
+        showError(data.message);
+        btn.disabled = false;
+        btn.innerText = "Reset Password & Login ➔";
+        return;
+      }
+
+      // Password Reset successful, auto-login user
+      showToast("Password updated! Logging in...");
+      const loginRes = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: newPassword
+      });
+
+      if (!loginRes.error) {
+        window.location.href = 'shop.html';
+      } else {
+        switchTab('login');
+        document.getElementById('loginEmail').value = email;
+        btn.disabled = false;
+        btn.innerText = "Reset Password & Login ➔";
+      }
+    }
+
+    (async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) window.location.href = 'shop.html';
+    })();
+  </script>
+</body>
+</html>

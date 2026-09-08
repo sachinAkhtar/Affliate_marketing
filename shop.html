@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The 50 BAZAR - ShopRewards Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <style>
+    :root {
+      --bg-color: #060911;
+      --card-bg: rgba(15, 22, 36, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #FFFFFF;
+      --text-sub: #94A3B8;
+      --accent-gold: #FFD700;
+      --accent-blue: #38BDF8;
+      --accent-green: #10B981;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    html { color-scheme: dark; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #060911; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 10px; border: 2px solid #060911; }
+    body {
+      min-height: 100vh;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      display: flex; flex-direction: column; justify-content: space-between;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 10%, rgba(56,189,248,0.12) 0%, transparent 40%),
+        radial-gradient(circle at 90% 90%, rgba(236,72,153,0.12) 0%, transparent 40%);
+    }
+
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 4%;
+      background: rgba(6,9,17,0.96);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky; top: 0; z-index: 100;
+      gap: 10px;
+    }
+    .brand-container { display: flex; align-items: center; gap: 11px; flex-shrink: 0; }
+    .brand-logo-img {
+      width: clamp(40px, 4vw, 50px); height: clamp(40px, 4vw, 50px);
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 14px rgba(255,107,0,0.3);
+    }
+    .brand-name {
+      font-size: clamp(1.05rem, 1.5vw, 1.35rem); font-weight: 800;
+      letter-spacing: -0.4px;
+      background: linear-gradient(135deg, #FF6B00, #FF007A, #9D00FF);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header-actions {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .burger-btn {
+      display: none;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--card-border);
+      width: 40px; height: 40px; border-radius: 11px;
+      cursor: pointer; align-items: center; justify-content: center;
+      flex-direction: column; gap: 5px; padding: 0;
+    }
+    .burger-btn span {
+      display: block; width: 18px; height: 2px;
+      background: #fff; border-radius: 2px; transition: 0.25s;
+    }
+    .burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .burger-btn.open span:nth-child(2) { opacity: 0; }
+    .burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu {
+      display: none;
+      position: absolute; top: 100%; right: 4%;
+      background: #0F172A; border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 12px; min-width: 200px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+      z-index: 120; flex-direction: column; gap: 8px;
+    }
+    .mobile-menu.active { display: flex; }
+    .mobile-menu button, .mobile-menu .real-wallet, .mobile-menu .user-pill {
+      width: 100%; justify-content: flex-start !important;
+      height: 42px !important;
+    }
+
+    .btn-login {
+      position: relative;
+      background: linear-gradient(135deg, #FF6B00, #FF007A, #9D00FF);
+      background-size: 200% 200%;
+      color: #FFF; border: none; height: 40px; padding: 0 15px;
+      border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.84rem; font-weight: 700;
+      animation: gradientMove 4s ease infinite;
+      box-shadow: 0 0 16px rgba(255,0,122,0.35);
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .btn-login:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 0 26px rgba(255,0,122,0.5); }
+    .btn-login::before {
+      content: ''; position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      animation: shine 2.8s ease-in-out infinite;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+    }
+    @keyframes shine { 0% { left: -100%; } 40% { left: 120%; } 100% { left: 120%; } }
+
+    .btn-claim-header {
+      background: linear-gradient(135deg, #38BDF8, #2563EB);
+      color: #FFF; border: none; height: 40px; padding: 0 14px;
+      border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.82rem; font-weight: 700;
+      box-shadow: 0 0 14px rgba(56,189,248,0.3);
+      transition: all 0.3s ease; white-space: nowrap;
+    }
+    .btn-claim-header:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .btn-claim-header:disabled { background: #334155; box-shadow: none; cursor: not-allowed; opacity: 0.7; }
+
+    .real-wallet {
+      display: flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.05));
+      border: 1px solid rgba(255,215,0,0.3);
+      padding: 6px 12px; border-radius: 12px; cursor: pointer;
+      transition: all 0.3s ease; user-select: none; height: 40px;
+    }
+    .real-wallet:hover { border-color: var(--accent-gold); }
+    .real-wallet.disabled { opacity: 0.55; cursor: not-allowed; pointer-events: none; }
+    .wallet-icon-box {
+      width: 26px; height: 26px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #000;
+    }
+    .wallet-coins { font-size: 0.85rem; font-weight: 800; color: var(--accent-gold); line-height: 1; }
+
+    .user-pill {
+      display: none; align-items: center; gap: 8px;
+      background: rgba(56,189,248,0.12);
+      border: 1px solid rgba(56,189,248,0.3);
+      padding: 5px 10px 5px 5px; border-radius: 30px;
+      cursor: pointer; transition: all 0.25s ease; height: 40px;
+    }
+    .user-pill:hover { background: rgba(56,189,248,0.2); }
+    .user-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, #38BDF8, #2563EB);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.78rem; color: #fff;
+    }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 2.2rem 1.2rem; width: 100%; flex: 1; }
+    .hero { text-align: center; margin-bottom: 2.2rem; }
+    
+    .hero h1 {
+      font-size: clamp(1.65rem, 3vw, 2.45rem); font-weight: 800; margin-bottom: 0.7rem;
+      display: inline-block;
+      background: linear-gradient(270deg, #FFF, #38BDF8, #FFD700, #FF007A, #38BDF8, #FFF);
+      background-size: 400% 400%;
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      animation: colorShift 6s ease infinite;
+    }
+
+    @keyframes colorShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hero p { color: var(--text-sub); font-size: clamp(0.88rem, 1.2vw, 1.05rem); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 1.35rem; }
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 1.55rem 1.1rem;
+      display: flex; flex-direction: column; align-items: center;
+      backdrop-filter: blur(16px);
+      transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .card:hover {
+      transform: translateY(-8px);
+      border-color: var(--store-color, rgba(255,255,255,0.4));
+      box-shadow: 0 10px 30px -10px var(--store-color, rgba(0,0,0,0.5));
+    }
+    .icon-link { text-decoration: none; display: inline-block; margin-bottom: 0.9rem; }
+    .icon-box { width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
+    .store-icon-img {
+      width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease;
+    }
+    .icon-link:hover .store-icon-img {
+      transform: scale(1.12) translateY(-4px);
+      filter: drop-shadow(0 8px 20px var(--store-color, rgba(56,189,248,0.6)));
+    }
+    .card-title { font-size: 1.12rem; font-weight: 700; margin-bottom: 0.15rem; }
+    .card-sub { font-size: 0.78rem; color: var(--text-sub); margin-bottom: 1.05rem; }
+    .btn-shop {
+      width: 100%; padding: 11px; border-radius: 12px;
+      background: var(--store-color, #38BDF8); color: #FFF;
+      font-weight: 700; font-size: 0.86rem; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      text-decoration: none; transition: filter 0.2s ease;
+    }
+    .btn-shop:hover { filter: brightness(1.15); }
+
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center;
+      z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 1rem;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: #0F172A; border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 1.5rem; max-width: 480px; width: 100%;
+      position: relative; max-height: 90vh; overflow-y: auto;
+    }
+    .modal-header-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.1rem; border-bottom: 1px solid var(--card-border); padding-bottom: 0.7rem;
+    }
+    .btn-back {
+      background: rgba(255,255,255,0.08); border: none; color: var(--accent-blue);
+      padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 4px;
+    }
+    .modal-close {
+      background: rgba(255,255,255,0.08); border: none; color: var(--text-sub);
+      width: 30px; height: 30px; border-radius: 50%; font-size: 1.1rem;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .guide-step {
+      display: flex; gap: 12px; margin-bottom: 1.1rem;
+      background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+    .guide-num {
+      width: 32px; height: 32px; background: var(--accent-blue); color: #000;
+      font-weight: 800; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .guide-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 3px; color: #FFF; }
+    .guide-desc { font-size: 0.82rem; color: var(--text-sub); line-height: 1.4; }
+
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-sub); margin-bottom: 0.3rem; }
+    .form-control {
+      width: 100%; padding: 12px 14px; background: #1E293B !important;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      color: #FFF !important; font-size: 0.88rem; outline: none;
+    }
+    select.form-control {
+      background-image: url("data:image/svg+xml;utf8,<svg fill='white' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+      background-repeat: no-repeat; background-position: right 10px center; background-size: 18px;
+    }
+    select.form-control option { background-color: #0F172A; color: #FFF; }
+    
+    .order-input-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .btn-remove-row {
+      background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #EF4444; padding: 0 12px; border-radius: 10px; cursor: pointer; font-weight: bold;
+    }
+    .btn-add-row {
+      background: rgba(56, 189, 248, 0.15); border: 1px dashed var(--accent-blue);
+      color: var(--accent-blue); padding: 8px; border-radius: 10px;
+      width: 100%; cursor: pointer; font-size: 0.8rem; font-weight: 700; margin-bottom: 1rem;
+    }
+    .btn-add-row:hover { background: rgba(56, 189, 248, 0.25); }
+
+    .btn-action {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #FFF; border: none; border-radius: 10px;
+      font-weight: 800; font-size: 0.88rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.3s ease;
+    }
+    .btn-action:disabled { background: #334155; color: #94A3B8; cursor: not-allowed; }
+    .instruction-box {
+      background: rgba(56,189,248,0.1); border: 1px solid rgba(56,189,248,0.3);
+      border-radius: 10px; padding: 10px 12px; font-size: 0.78rem; color: #38BDF8;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+    }
+    .wallet-card-visual {
+      background: linear-gradient(135deg, #1e1b4b, #312e81);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 16px;
+      padding: 1.2rem; margin-bottom: 1.2rem; text-align: center;
+    }
+    .wallet-big-coins { font-size: 2.1rem; font-weight: 800; color: var(--accent-gold); margin: 0.2rem 0; }
+    .rupee-equiv { font-size: 0.9rem; color: #A5B4FC; font-weight: 700; margin-bottom: 0.5rem; }
+    .balance-breakdown {
+      display: flex; justify-content: space-around; background: rgba(0,0,0,0.25);
+      padding: 8px; border-radius: 10px; margin-top: 8px; font-size: 0.75rem;
+    }
+    .wallet-menu-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .menu-btn-card {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--card-border);
+      padding: 12px 14px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .menu-btn-card:hover { background: rgba(255,255,255,0.08); border-color: var(--accent-blue); }
+    .pm-tab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+    .pm-tab {
+      border: 1px solid var(--card-border); background: rgba(255,255,255,0.03);
+      padding: 10px; border-radius: 10px; cursor: pointer; text-align: center;
+      font-size: 0.82rem; font-weight: 600;
+    }
+    .pm-tab.active { border-color: var(--accent-blue); background: rgba(56,189,248,0.12); color: var(--accent-blue); }
+    .history-item {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--card-border);
+      padding: 10px 12px; border-radius: 10px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px; font-size: 0.8rem;
+    }
+    .badge-processing { background: rgba(234,179,8,0.2); color: #EAB308; padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+    .badge-success { background: rgba(16,185,129,0.2); color: #10B981; padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+    .badge-rejected { background: rgba(239,68,68,0.2); color: #EF4444; padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+
+    .verification-overlay {
+      position: fixed; inset: 0; background: #060911; z-index: 500;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease; padding: 1rem;
+    }
+    .verification-overlay.active { opacity: 1; pointer-events: auto; }
+    .scanner-box {
+      width: 80px; height: 80px; border-radius: 18px;
+      background: rgba(56,189,248,0.1); border: 2px solid var(--accent-blue);
+      display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1.2rem;
+    }
+    .scan-line {
+      position: absolute; width: 100%; height: 3px; background: var(--accent-blue);
+      box-shadow: 0 0 15px var(--accent-blue); animation: scan 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes scan { 0% { top: 10%; } 100% { top: 90%; } }
+
+    .profile-field { margin-bottom: 0.9rem; }
+    .profile-field label { font-size: 0.78rem; color: var(--text-sub); display: block; margin-bottom: 4px; }
+    .profile-field input {
+      width: 100%; padding: 11px 13px; background: #1E293B;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      color: #fff; font-size: 0.88rem; outline: none;
+    }
+    .profile-field input:focus { border-color: var(--accent-blue); }
+    .btn-logout {
+      width: 100%; margin-top: 10px; padding: 11px;
+      background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.35);
+      color: #F87171; border-radius: 10px; font-weight: 700; font-size: 0.88rem;
+      cursor: pointer; transition: all 0.25s ease;
+    }
+    .btn-logout:hover { background: #EF4444; color: #fff; }
+
+    /* Payment methods list */
+    .pm-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+    .pm-item {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px;
+    }
+    .pm-item-info { flex: 1; min-width: 0; }
+    .pm-item-type { font-size: 0.72rem; color: var(--accent-blue); font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+    .pm-item-details { font-size: 0.82rem; color: #e2e8f0; word-break: break-all; }
+    .pm-delete-btn {
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.35);
+      color: #F87171;
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .pm-delete-btn:hover { background: #EF4444; color: #fff; }
+    .pm-empty { text-align: center; color: var(--text-sub); font-size: 0.82rem; padding: 16px; }
+
+    footer {
+      background: rgba(6,9,17,0.95); backdrop-filter: blur(20px);
+      border-top: 1px solid var(--card-border);
+      padding: 2.2rem 4% 1.4rem; margin-top: 2.5rem;
+    }
+    .footer-container {
+      max-width: 1200px; margin: 0 auto;
+      display: grid; grid-template-columns: 1.4fr 1fr; gap: 2rem; align-items: start;
+    }
+    .founder-card {
+      background: rgba(15,22,36,0.6); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px; padding: 1.3rem;
+      display: flex; gap: 1.1rem; align-items: flex-start;
+      backdrop-filter: blur(10px); transition: all 0.3s ease;
+    }
+    .founder-card:hover { border-color: rgba(56,189,248,0.4); transform: translateY(-3px); }
+    .founder-img-wrapper { position: relative; flex-shrink: 0; }
+    .founder-img {
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover; object-position: center top;
+      border: 3px solid #38BDF8; box-shadow: 0 0 18px rgba(56,189,248,0.4); display: block;
+    }
+    .founder-badge {
+      position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(135deg, #FF6B00, #FF007A);
+      color: #FFF; font-size: 0.6rem; font-weight: 800;
+      padding: 2px 8px; border-radius: 10px; white-space: nowrap; text-transform: uppercase;
+    }
+    .founder-title-label { font-size: 0.7rem; text-transform: uppercase; color: var(--accent-blue); font-weight: 800; letter-spacing: 1px; margin-bottom: 2px; }
+    .founder-name { font-size: 1.15rem; font-weight: 800; color: #FFF; margin-bottom: 5px; }
+    .founder-location {
+      font-size: 0.72rem; color: var(--accent-gold); font-weight: 600;
+      display: inline-flex; align-items: center; gap: 4px;
+      background: rgba(255,215,0,0.1); padding: 2px 8px; border-radius: 6px; margin-bottom: 7px;
+    }
+    .founder-bio { font-size: 0.8rem; color: var(--text-sub); line-height: 1.4; margin-bottom: 0.9rem; }
+    .contact-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 13px; border-radius: 8px; font-size: 0.76rem; font-weight: 700;
+      text-decoration: none; background: rgba(56,189,248,0.15); color: #38BDF8;
+      border: 1px solid rgba(56,189,248,0.3); transition: all 0.2s ease; cursor: pointer;
+    }
+    .contact-btn:hover { background: #38BDF8; color: #000; }
+
+    .footer-right { display: flex; flex-direction: column; justify-content: space-between; height: 100%; gap: 1rem; }
+    .footer-brand-summary h4 {
+      font-size: 1.05rem; font-weight: 800;
+      background: linear-gradient(135deg, #FF6B00, #FF007A);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.4rem;
+    }
+    .footer-brand-summary p { font-size: 0.78rem; color: var(--text-sub); line-height: 1.4; }
+
+    .btn-how-footer {
+      background: rgba(255,255,255,0.06); border: 1px solid var(--card-border);
+      color: #FFF; height: 42px; padding: 0 16px; border-radius: 12px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
+      font-size: 0.85rem; font-weight: 700; transition: all 0.3s ease; margin-top: 8px;
+    }
+    .btn-how-footer:hover { background: rgba(255,255,255,0.12); border-color: var(--accent-blue); }
+
+    .btn-instagram-footer {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 14px; border-radius: 10px; font-size: 0.78rem; font-weight: 700;
+      text-decoration: none;
+      background: linear-gradient(135deg, rgba(225, 48, 108, 0.15), rgba(253, 29, 29, 0.15));
+      color: #FF6492;
+      border: 1px solid rgba(225, 48, 108, 0.35);
+      transition: all 0.25s ease;
+      margin-top: 8px; width: fit-content; cursor: pointer;
+    }
+    .btn-instagram-footer:hover {
+      background: linear-gradient(135deg, #E1306C, #FD1D1D);
+      color: #FFF;
+      box-shadow: 0 0 14px rgba(225, 48, 108, 0.45);
+    }
+
+    .copyright-text {
+      text-align: left; color: #64748B; font-size: 0.75rem;
+      padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.8rem;
+    }
+
+    @media (max-width: 720px) {
+      .footer-container { grid-template-columns: 1fr; gap: 1.5rem; }
+      .header-actions .desktop-only { display: none !important; }
+      .burger-btn { display: flex; }
+      .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+      .founder-card { flex-direction: column; align-items: center; text-align: center; }
+    }
+    @media (max-width: 420px) {
+      .grid { grid-template-columns: 1fr; }
+      header { padding: 0.65rem 3.5%; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-container">
+      <img src="logo.jpg.jpeg" alt="The 50 BAZAR Logo" class="brand-logo-img">
+      <div class="brand-name">The 50 BAZAR</div>
+    </div>
+    
+    <div class="header-actions">
+      <button class="btn-login desktop-only" id="loginBtn" onclick="window.location.href='login.html'">
+        🔐 Login
+      </button>
+      <div class="user-pill desktop-only" id="userPill" onclick="openProfileModal()">
+        <div class="user-avatar" id="userAvatar">U</div>
+      </div>
+      <button class="btn-claim-header desktop-only" id="openClaimBtn" disabled>🎁 Claim</button>
+      <div class="real-wallet disabled desktop-only" id="walletBtn" title="Login required">
+        <div class="wallet-icon-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"></path></svg>
+        </div>
+        <div class="wallet-coins"><span id="coinBalance">0</span> Coins</div>
+      </div>
+
+      <button class="burger-btn" id="burgerBtn" onclick="toggleMobileMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <button class="btn-login" id="loginBtnMobile" onclick="window.location.href='login.html'">🔐 Login</button>
+      <div class="user-pill" id="userPillMobile" style="display:none;" onclick="openProfileModal(); closeMobileMenu();">
+        <div class="user-avatar" id="userAvatarMobile">U</div>
+        <span style="font-size:0.82rem;font-weight:700;margin-left:4px;">My Account</span>
+      </div>
+      <button class="btn-claim-header" id="openClaimBtnMobile" disabled onclick="openClaimFromMobile()">🎁 Claim</button>
+      <div class="real-wallet disabled" id="walletBtnMobile" onclick="openWalletFromMobile()">
+        <div class="wallet-icon-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="M12 11a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"></path></svg>
+        </div>
+        <div class="wallet-coins"><span id="coinBalanceMobile">0</span> Coins</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Shop & Get Reward Coins</h1>
+      <p>Select your favorite store, order products, and claim order Reward Coins!</p>
+    </div>
+    <div class="grid" id="storeGrid"></div>
+  </main>
+
+  <div class="modal-overlay" id="howItWorksModal">
+    <div class="modal-card">
+      <div class="modal-header-bar">
+        <h3 style="font-size:1.1rem;color:var(--accent-blue);">💡 How ShopRewards Works</h3>
+        <button class="modal-close" onclick="closeModal('howItWorksModal')">&times;</button>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">1</div>
+        <div>
+          <div class="guide-title">Shop From Any Store</div>
+          <div class="guide-desc">Choose any store listed below (Flipkart, Ajio, Myntra, etc.) and complete your shopping.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">2</div>
+        <div>
+          <div class="guide-title">Claim Reward Coins</div>
+          <div class="guide-desc">Enter your Order ID, Order Date, and Order Amount. Your claim goes into Processing. Admin verifies it and then coins are credited to your wallet.</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">3</div>
+        <div>
+          <div class="guide-title">Coin Conversion Rate</div>
+          <div class="guide-desc">Every <b>50 Coins = ₹1 Cash</b>. (For example: 5,000 Coins = ₹100 Real Money).</div>
+        </div>
+      </div>
+      <div class="guide-step">
+        <div class="guide-num">4</div>
+        <div>
+          <div class="guide-title">Smart 15-Day Return Lock</div>
+          <div class="guide-desc">Each order's coins unlock individually 15 days after its order date. Older unlocked coins are never blocked by new orders!</div>
+        </div>
+      </div>
+      <button class="btn-action" onclick="closeModal('howItWorksModal')">Got it, Let's Shop! ➔</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="claimModal">
+    <div class="modal-card">
+      <div class="modal-header-bar">
+        <h3 style="font-size:1.1rem;color:var(--accent-blue);">Claim Order Coins</h3>
+        <button class="modal-close" onclick="closeModal('claimModal')">&times;</button>
+      </div>
+      <form id="rewardForm">
+        <div class="form-group">
+          <label>Select Store</label>
+          <select class="form-control" id="storeSelect" required>
+            <option value="Flipkart">Flipkart</option>
+            <option value="Ajio">Ajio</option>
+            <option value="Myntra">Myntra</option>
+            <option value="Meesho">Meesho</option>
+            <option value="Shopsy">Shopsy</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Order ID(s) (Min 1, Max 20)</label>
+          <div id="orderIdsContainer">
+            <div class="order-input-row">
+              <input type="text" class="form-control order-id-field" placeholder="e.g. OD3029104829100000" required>
+            </div>
+          </div>
+          <button type="button" class="btn-add-row" id="addOrderIdBtn" onclick="addOrderIdRow()">+ Add Another Order ID</button>
+          <small id="orderIdHint" style="color:var(--text-sub);font-size:0.72rem;display:block;margin-top:-6px;margin-bottom:12px;">Flipkart: Must start with OD followed by digits</small>
+        </div>
+
+        <div class="form-group">
+          <label>Order Date</label>
+          <input type="date" class="form-control" id="orderDateInput" required>
+        </div>
+        <div class="form-group">
+          <label>Total Combined Order Amount (₹)</label>
+          <input type="number" class="form-control" id="orderAmountInput" placeholder="Combined total amount for all orders" min="1" required>
+        </div>
+        <button type="submit" class="btn-action">Submit for Verification ➔</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="walletModal">
+    <div class="modal-card">
+      <div class="modal-header-bar">
+        <button class="btn-back" id="walletBackBtn" style="visibility:hidden;" onclick="showWalletView('main')">← Back</button>
+        <h3 style="font-size:1rem;color:var(--accent-gold);" id="walletModalTitle">My Rewards Wallet</h3>
+        <button class="modal-close" onclick="closeModal('walletModal')">&times;</button>
+      </div>
+      <div id="walletViewMain">
+        <div class="wallet-card-visual">
+          <div style="font-size:0.75rem;color:#A5B4FC;text-transform:uppercase;">Total Balance</div>
+          <div class="wallet-big-coins"><span id="walletModalCoins">0</span> Coins</div>
+          <div class="rupee-equiv">≈ ₹<span id="walletRupeeValue">0.00</span></div>
+          <div class="balance-breakdown">
+            <div>🔓 Available: <strong style="color:var(--accent-green)" id="unlockedCoinsText">0</strong></div>
+            <div>🔒 Locked: <strong style="color:#EAB308" id="lockedCoinsText">0</strong></div>
+          </div>
+        </div>
+        <div class="wallet-menu-grid">
+          <div class="menu-btn-card" onclick="showWalletView('paymentDetails')">
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">Payment Methods</div>
+              <div style="font-size:0.75rem;color:var(--text-sub);" id="pmSubStatus">Add UPI / Bank</div>
+            </div>
+            <span style="color:var(--accent-blue);">➔</span>
+          </div>
+          <div class="menu-btn-card" onclick="showWalletView('withdraw')">
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">Withdraw Coins</div>
+              <div style="font-size:0.75rem;color:var(--text-sub);">Min 5,000 unlocked coins</div>
+            </div>
+            <span style="color:var(--accent-blue);">➔</span>
+          </div>
+          <div class="menu-btn-card" onclick="showWalletView('history')">
+            <div>
+              <div style="font-weight:700;font-size:0.9rem;">Withdrawal History</div>
+              <div style="font-size:0.75rem;color:var(--text-sub);">View past requests</div>
+            </div>
+            <span style="color:var(--accent-blue);">➔</span>
+          </div>
+        </div>
+      </div>
+      <div id="walletViewPayment" style="display:none;">
+        <div class="pm-list" id="pmListContainer">
+          <div class="pm-empty">No payment methods saved yet.</div>
+        </div>
+
+        <div class="pm-tab-grid">
+          <div class="pm-tab active" id="pmUpiBtn" onclick="setPaymentType('upi')">UPI</div>
+          <div class="pm-tab" id="pmBankBtn" onclick="setPaymentType('bank')">Bank</div>
+        </div>
+        <form id="upiForm" onsubmit="savePaymentDetails(event)">
+          <div class="form-group">
+            <label>UPI ID</label>
+            <input type="text" class="form-control" id="upiInput" placeholder="e.g. name@upi" required>
+          </div>
+          <button type="submit" class="btn-action">+ Add UPI</button>
+        </form>
+        <form id="bankForm" style="display:none;" onsubmit="savePaymentDetails(event)">
+          <div class="form-group">
+            <label>Account Holder Name</label>
+            <input type="text" class="form-control" id="bankNameInput" required>
+          </div>
+          <div class="form-group">
+            <label>Account Number</label>
+            <input type="text" class="form-control" id="bankAccInput" required>
+          </div>
+          <div class="form-group">
+            <label>IFSC Code</label>
+            <input type="text" class="form-control" id="bankIfscInput" required>
+          </div>
+          <button type="submit" class="btn-action">+ Add Bank Account</button>
+        </form>
+      </div>
+      <div id="walletViewWithdraw" style="display:none;">
+        <div class="instruction-box">
+          <span>ℹ️</span>
+          <div>Only coins whose 15-day return lock period has expired can be withdrawn.</div>
+        </div>
+        <div class="form-group">
+          <label>Select Payment Method</label>
+          <select class="form-control" id="withdrawPmSelect" required>
+            <option value="">-- Select Payment Method --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Enter Coins to Withdraw (Available: <span id="maxAvailableWithdrawText" style="color:var(--accent-green);font-weight:700;">0</span>)</label>
+          <input type="number" class="form-control" id="withdrawCoinsInput" placeholder="Min 5,000 Coins" min="5000">
+        </div>
+        <div style="font-size:0.78rem;color:var(--text-sub);margin-bottom:1rem;" id="withdrawTargetDetail">Target: Please add & select a payment method.</div>
+        <button type="button" class="btn-action" id="confirmWithdrawBtn" onclick="processWithdrawal()">Confirm Withdrawal ➔</button>
+      </div>
+      <div id="walletViewHistory" style="display:none;">
+        <div id="historyList">
+          <div style="font-size:0.8rem;color:var(--text-sub);text-align:center;padding:15px;">No transactions found.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal-card">
+      <div class="modal-header-bar">
+        <h3 style="font-size:1.05rem;color:var(--accent-blue);">My Account</h3>
+        <button class="modal-close" onclick="closeModal('profileModal')">&times;</button>
+      </div>
+      <form id="profileForm" onsubmit="updateProfile(event)">
+        <div class="profile-field">
+          <label>Full Name</label>
+          <input type="text" id="profileName" required minlength="2">
+        </div>
+        <div class="profile-field">
+          <label>Mobile Number</label>
+          <input type="tel" id="profilePhone" pattern="[6-9][0-9]{9}" required>
+        </div>
+        <div class="profile-field">
+          <label>Email Address</label>
+          <input type="email" id="profileEmail" required readonly style="opacity:0.7;">
+        </div>
+        <button type="submit" class="btn-action">Update Details</button>
+      </form>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="verification-overlay" id="verifyOverlay">
+    <div class="scanner-box">
+      <div class="scan-line"></div>
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-blue)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    </div>
+    <div style="text-align:center;">
+      <div style="font-size:1rem;font-weight:800;margin-bottom:0.3rem;" id="verifyStepText">Processing...</div>
+      <div style="font-size:0.8rem;color:var(--text-sub);" id="verifySubText">Please wait</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-container">
+      <div class="founder-card">
+        <div class="founder-img-wrapper">
+          <img src="sa.jpeg" alt="Jhunnu Babu - Founder" class="founder-img">
+          <div class="founder-badge">Founder</div>
+        </div>
+        <div class="founder-info">
+          <div class="founder-title-label">Founder & Operator</div>
+          <div class="founder-name">JHUNNU BABU</div>
+          <div class="founder-location">📍 Siwan, Bihar</div>
+          <p class="founder-bio">
+            Jhunnu babu built <b>The 50 BAZAR</b> to turn everyday shopping on Flipkart, Ajio, Myntra, Shopsy & Meesho into real cashback rewards.
+          </p>
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=kraftspace3@gmail.com" target="_blank" class="contact-btn">✉️ Email Support</a>
+        </div>
+      </div>
+
+      <div class="footer-right">
+        <div class="footer-brand-summary">
+          <h4>The 50 BAZAR</h4>
+          <p>India's trusted 100% ShopRewards platform. Shop from your favorite stores and convert order value into withdrawable cashback coins.</p>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <button class="btn-how-footer" onclick="openModal('howItWorksModal')">
+              💡 How it Works
+            </button>
+            <a href="https://www.instagram.com/the50bazar?igsh=dzAxOGZyeG04NWFw" target="_blank" class="btn-instagram-footer">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+              Follow on Instagram
+            </a>
+          </div>
+        </div>
+        <div class="copyright-text">
+          &copy; 2026 The 50 BAZAR. All Rights Reserved.
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = "https://wwbgoccfguemzhefpeiu.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_oXBQgh0OBovBX4la3pLyfw_IIhfijBE";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const stores = [
+      { name: "Flipkart", sub: "Official Store", url: "https://fktr.in/5OF16My", color: "#2874F0", logo: "1.jpeg" },
+      { name: "Ajio", sub: "Official Store", url: "https://ajiio.in/Bkh3R3J", color: "#2C4152", logo: "4.png" },
+      { name: "Myntra", sub: "Official Store", url: "https://myntr.it/R2mL9jp", color: "#FF3F6C", logo: "2.png" },
+      { name: "Meesho", sub: "Official Store", url: "https://bitli.in/c0a8dKj", color: "#F43397", logo: "3.png" },
+      { name: "Shopsy", sub: "Official Store", url: "https://bitli.in/m0FQb04", color: "#00B5B5", logo: "5.jpeg" }
+    ];
+
+    let currentUser = null;
+    let userOrders = [];
+    let paymentMethods = [];          // array of {id, type, details}
+    let totalWithdrawnCoins = 0;      // Processing + Success
+    let claimsChannel = null;
+
+    function calculateCoinsFromAmount(amount) {
+      const amt = Math.floor(amount);
+      if (amt <= 0) return 0;
+      if (amt <= 5000) return amt;
+      const bracket = Math.ceil((amt - 5000) / 5000);
+      return 5000 + (bracket * 50);
+    }
+
+    const gridContainer = document.getElementById('storeGrid');
+    stores.forEach((store) => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.setProperty('--store-color', store.color);
+      card.innerHTML = `
+        <a href="${store.url}" target="_blank" class="icon-link" title="Open ${store.name}">
+          <div class="icon-box"><img src="${store.logo}" alt="${store.name}" class="store-icon-img"></div>
+        </a>
+        <div class="card-title">${store.name}</div>
+        <div class="card-sub">${store.sub}</div>
+        <a href="${store.url}" target="_blank" class="btn-shop">Shop Now ➔</a>
+      `;
+      gridContainer.appendChild(card);
+    });
+
+    document.getElementById('orderDateInput').max = new Date().toISOString().split("T")[0];
+
+    function toggleMobileMenu() {
+      const btn = document.getElementById('burgerBtn');
+      const menu = document.getElementById('mobileMenu');
+      btn.classList.toggle('open');
+      menu.classList.toggle('active');
+    }
+    function closeMobileMenu() {
+      document.getElementById('burgerBtn').classList.remove('open');
+      document.getElementById('mobileMenu').classList.remove('active');
+    }
+    function openClaimFromMobile() {
+      closeMobileMenu();
+      if (!currentUser) { alert("Please login to claim rewards."); window.location.href = 'login.html'; return; }
+      openModal('claimModal');
+    }
+    async function openWalletFromMobile() {
+      closeMobileMenu();
+      if (!currentUser) { alert("Please login to access your wallet."); window.location.href = 'login.html'; return; }
+      await loadUserData();
+      showWalletView('main');
+      openModal('walletModal');
+    }
+
+    function addOrderIdRow() {
+      const container = document.getElementById('orderIdsContainer');
+      const rows = container.getElementsByClassName('order-input-row');
+      if (rows.length >= 20) {
+        alert("Maximum 20 Order IDs allowed per claim submission.");
+        return;
+      }
+      const selectedStore = document.getElementById('storeSelect').value;
+      const placeholder = platformValidationRules[selectedStore] ? platformValidationRules[selectedStore].placeholder : "Enter Order ID";
+      
+      const newRow = document.createElement('div');
+      newRow.className = 'order-input-row';
+      newRow.innerHTML = `
+        <input type="text" class="form-control order-id-field" placeholder="${placeholder}" required>
+        <button type="button" class="btn-remove-row" onclick="removeOrderIdRow(this)">✕</button>
+      `;
+      container.appendChild(newRow);
+    }
+
+    function removeOrderIdRow(btn) {
+      const container = document.getElementById('orderIdsContainer');
+      const rows = container.getElementsByClassName('order-input-row');
+      if (rows.length <= 1) {
+        alert("At least 1 Order ID field is required.");
+        return;
+      }
+      btn.parentElement.remove();
+    }
+
+    async function initAuth() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        currentUser = session.user;
+        await loadUserProfile();
+        await loadUserData();
+        setLoggedInUI(true);
+        setupRealtimeClaims();
+      } else {
+        setLoggedInUI(false);
+      }
+    }
+
+    function setupRealtimeClaims() {
+      if (!currentUser) return;
+
+      if (claimsChannel) {
+        supabaseClient.removeChannel(claimsChannel);
+      }
+
+      claimsChannel = supabaseClient
+        .channel('user-claims-' + currentUser.id)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'claims',
+            filter: `user_id=eq.${currentUser.id}`
+          },
+          (payload) => {
+            console.log('Realtime UPDATE received:', payload);
+            if (payload.new && payload.new.status === 'Approved') {
+              console.log('Claim Approved! Refreshing wallet...');
+              loadUserData();
+              if (typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+              }
+            } else {
+              loadUserData();
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Realtime subscription status:', status);
+        });
+    }
+
+    function setLoggedInUI(isLoggedIn) {
+      const loginBtn = document.getElementById('loginBtn');
+      const loginBtnMobile = document.getElementById('loginBtnMobile');
+      const userPill = document.getElementById('userPill');
+      const userPillMobile = document.getElementById('userPillMobile');
+      const claimBtn = document.getElementById('openClaimBtn');
+      const claimBtnMobile = document.getElementById('openClaimBtnMobile');
+      const walletBtn = document.getElementById('walletBtn');
+      const walletBtnMobile = document.getElementById('walletBtnMobile');
+
+      if (isLoggedIn) {
+        loginBtn.style.display = 'none';
+        loginBtnMobile.style.display = 'none';
+        userPill.style.display = 'flex';
+        userPillMobile.style.display = 'flex';
+        claimBtn.disabled = false;
+        claimBtnMobile.disabled = false;
+        walletBtn.classList.remove('disabled');
+        walletBtnMobile.classList.remove('disabled');
+        walletBtn.title = "Open Wallet";
+      } else {
+        loginBtn.style.display = 'flex';
+        loginBtnMobile.style.display = 'flex';
+        userPill.style.display = 'none';
+        userPillMobile.style.display = 'none';
+        claimBtn.disabled = true;
+        claimBtnMobile.disabled = true;
+        walletBtn.classList.add('disabled');
+        walletBtnMobile.classList.add('disabled');
+        walletBtn.title = "Login required";
+      }
+    }
+
+    async function loadUserProfile() {
+      if (!currentUser) return;
+      const { data } = await supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single();
+      const name = (data && data.full_name) ? data.full_name : (currentUser.user_metadata?.full_name || 'User');
+      const firstLetter = name.charAt(0).toUpperCase();
+      document.getElementById('userAvatar').innerText = firstLetter;
+      document.getElementById('userAvatarMobile').innerText = firstLetter;
+      document.getElementById('profileName').value = name;
+      document.getElementById('profilePhone').value = (data && data.phone) || currentUser.user_metadata?.phone || '';
+      document.getElementById('profileEmail').value = (data && data.email) || currentUser.email;
+    }
+
+    async function loadUserData() {
+      if (!currentUser) return;
+
+      // 1. Approved claims
+      const { data: approvedClaims, error } = await supabaseClient
+        .from('claims')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('status', 'Approved');
+
+      if (error) {
+        console.error('Load claims error:', error);
+        return;
+      }
+
+      userOrders = (approvedClaims || []).map(c => ({
+        id: c.order_id,
+        amount: c.amount,
+        coins: c.coins,
+        date: c.order_date,
+        store: c.store
+      }));
+
+      // 2. Total withdrawn (Processing + Success) — this is the key fix
+      const { data: wdData } = await supabaseClient
+        .from('withdrawals')
+        .select('coins, status')
+        .eq('user_id', currentUser.id)
+        .in('status', ['Processing', 'Success']);
+
+      totalWithdrawnCoins = (wdData || []).reduce((sum, w) => sum + Number(w.coins || 0), 0);
+
+      // 3. Payment methods
+      const { data: pmData } = await supabaseClient
+        .from('payment_details')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      paymentMethods = pmData || [];
+      renderPaymentMethodsList();
+      updatePmStatusText();
+      updateWalletUI();
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function openProfileModal() { openModal('profileModal'); }
+
+    document.getElementById('openClaimBtn').addEventListener('click', () => {
+      if (!currentUser) { alert("Please login to claim rewards."); window.location.href = 'login.html'; return; }
+      openModal('claimModal');
+    });
+
+    document.getElementById('walletBtn').addEventListener('click', async () => {
+      if (!currentUser) { alert("Please login to access your wallet."); window.location.href = 'login.html'; return; }
+      await loadUserData();
+      showWalletView('main');
+      openModal('walletModal');
+    });
+
+    const storeSelect = document.getElementById('storeSelect');
+    const orderIdHint = document.getElementById('orderIdHint');
+    const platformValidationRules = {
+      Flipkart: { placeholder: "e.g. OD3029104829100000", hint: "Flipkart Order ID must start with OD followed by numbers" },
+      Shopsy:  { placeholder: "e.g. OD3029104829100000", hint: "Shopsy Order ID must start with OD followed by numbers" },
+      Ajio:    { placeholder: "e.g. FN5337706434 or AF26KAR248465291", hint: "Ajio: FN + digits OR AF + letters/numbers" },
+      Myntra:  { placeholder: "e.g. 1180000123456789", hint: "Myntra Order ID must be 10-21 numeric digits" },
+      Meesho:  { placeholder: "e.g. 295226839146859", hint: "Meesho Order ID must be 10-18 digits (optional _1)" }
+    };
+
+    storeSelect.addEventListener('change', (e) => {
+      const selected = e.target.value;
+      const inputs = document.querySelectorAll('.order-id-field');
+      if (platformValidationRules[selected]) {
+        inputs.forEach(input => input.placeholder = platformValidationRules[selected].placeholder);
+        orderIdHint.innerText = platformValidationRules[selected].hint;
+      }
+    });
+
+    function validateOrderId(store, orderId) {
+      const cleanId = orderId.trim();
+      if (store === 'Flipkart' || store === 'Shopsy') return /^OD\d{10,20}$/i.test(cleanId);
+      if (store === 'Ajio') return /^(FN\d{7,15}|AF[A-Z0-9]{8,20})$/i.test(cleanId);
+      if (store === 'Myntra') return /^\d{10,21}$/.test(cleanId);
+      if (store === 'Meesho') return /^\d{10,18}(_\d+)?$/.test(cleanId);
+      return cleanId.length >= 6;
+    }
+
+    function getCoinsBreakdown() {
+      const now = new Date();
+      let totalEarned = 0, unlockedEarned = 0, locked = 0;
+
+      userOrders.forEach(order => {
+        const coins = Number(order.coins !== undefined ? order.coins : calculateCoinsFromAmount(order.amount));
+        totalEarned += coins;
+        const orderDate = new Date(order.date);
+        const diffDays = Math.floor((now - orderDate) / (1000 * 60 * 60 * 24));
+        if (diffDays >= 15) unlockedEarned += coins;
+        else locked += coins;
+      });
+
+      // Available = unlocked earned minus already withdrawn (Processing + Success)
+      const available = Math.max(0, unlockedEarned - totalWithdrawnCoins);
+      // Total balance shown = (unlocked earned - withdrawn) + locked
+      const totalBalance = available + locked;
+
+      return { total: totalBalance, unlocked: available, locked, totalEarned, unlockedEarned };
+    }
+
+    function updateWalletUI() {
+      const { total, unlocked, locked } = getCoinsBreakdown();
+      document.getElementById('coinBalance').innerText = total;
+      document.getElementById('coinBalanceMobile').innerText = total;
+      document.getElementById('walletModalCoins').innerText = total;
+      document.getElementById('walletRupeeValue').innerText = (total / 50).toFixed(2);
+      document.getElementById('unlockedCoinsText').innerText = unlocked;
+      document.getElementById('lockedCoinsText').innerText = locked;
+      document.getElementById('maxAvailableWithdrawText').innerText = unlocked;
+    }
+
+    function checkWithdrawalEligibility() {
+      const withdrawBtn = document.getElementById('confirmWithdrawBtn');
+      const { unlocked } = getCoinsBreakdown();
+      if (unlocked < 5000) {
+        withdrawBtn.disabled = true;
+        withdrawBtn.innerText = "Min 5,000 Unlocked Coins Required";
+      } else {
+        withdrawBtn.disabled = false;
+        withdrawBtn.innerText = "Confirm Withdrawal ➔";
+      }
+    }
+
+    function updatePmStatusText() {
+      const el = document.getElementById('pmSubStatus');
+      if (paymentMethods.length === 0) {
+        el.innerText = 'Add UPI / Bank';
+      } else {
+        el.innerText = `${paymentMethods.length} method${paymentMethods.length > 1 ? 's' : ''} saved`;
+      }
+    }
+   function renderPaymentMethodsList() {
+  const container = document.getElementById('pmListContainer');
+  if (!paymentMethods || paymentMethods.length === 0) {
+    container.innerHTML = `<div class="pm-empty">No payment methods saved yet.</div>`;
+    return;
+  }
+  container.innerHTML = paymentMethods.map(pm => `
+    <div class="pm-item">
+      <div class="pm-item-info">
+        <div class="pm-item-type">${pm.type}</div>
+        <div class="pm-item-details">${pm.details}</div>
+      </div>
+      <button class="pm-delete-btn" title="Delete" onclick="deletePaymentMethod('${pm.id}')">🗑</button>
+    </div>
+  `).join('');
+}
+    function populateWithdrawPmSelect() {
+      const select = document.getElementById('withdrawPmSelect');
+      select.innerHTML = `<option value="">-- Select Payment Method --</option>`;
+      paymentMethods.forEach(pm => {
+        const opt = document.createElement('option');
+        opt.value = pm.id;
+        opt.textContent = `${pm.type}: ${pm.details}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function showWalletView(view) {
+      document.getElementById('walletViewMain').style.display = 'none';
+      document.getElementById('walletViewPayment').style.display = 'none';
+      document.getElementById('walletViewWithdraw').style.display = 'none';
+      document.getElementById('walletViewHistory').style.display = 'none';
+      const backBtn = document.getElementById('walletBackBtn');
+      const title = document.getElementById('walletModalTitle');
+      backBtn.style.visibility = 'visible';
+      if (view === 'main') {
+        document.getElementById('walletViewMain').style.display = 'block';
+        backBtn.style.visibility = 'hidden';
+        title.innerText = 'My Rewards Wallet';
+      } else if (view === 'paymentDetails') {
+        document.getElementById('walletViewPayment').style.display = 'block';
+        title.innerText = 'Payment Methods';
+        renderPaymentMethodsList();
+      } else if (view === 'withdraw') {
+        document.getElementById('walletViewWithdraw').style.display = 'block';
+        title.innerText = 'Withdraw Coins';
+        populateWithdrawPmSelect();
+        document.getElementById('withdrawTargetDetail').innerText = paymentMethods.length
+          ? 'Select a payment method above.' : 'No payment method saved yet. Please add one first.';
+        checkWithdrawalEligibility();
+      } else if (view === 'history') {
+        document.getElementById('walletViewHistory').style.display = 'block';
+        title.innerText = 'Withdrawal History';
+        renderHistory();
+      }
+    }
+
+    document.getElementById('rewardForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentUser) { alert("Please login to claim rewards."); return; }
+      
+      const storeName = document.getElementById('storeSelect').value;
+      const orderInputs = Array.from(document.querySelectorAll('.order-id-field'));
+      const orderIds = orderInputs.map(inp => inp.value.trim()).filter(id => id.length > 0);
+      const orderDate = document.getElementById('orderDateInput').value;
+      const totalAmount = parseFloat(document.getElementById('orderAmountInput').value);
+
+      if (orderIds.length === 0) {
+        alert("Please enter at least 1 Order ID.");
+        return;
+      }
+      if (orderIds.length > 20) {
+        alert("Maximum 20 Order IDs allowed at once.");
+        return;
+      }
+
+      const uniqueOrderIds = new Set(orderIds);
+      if (uniqueOrderIds.size !== orderIds.length) {
+        alert("Duplicate Order IDs detected in your input. Each Order ID must be unique.");
+        return;
+      }
+
+      for (let id of orderIds) {
+        if (!validateOrderId(storeName, id)) {
+          alert(`Invalid Order ID "${id}" format for ${storeName}.\n${platformValidationRules[storeName].hint}`);
+          return;
+        }
+      }
+
+      closeModal('claimModal');
+      document.getElementById('verifyStepText').innerText = "Submitting claim...";
+      document.getElementById('verifySubText').innerText = "Please wait a moment";
+      document.getElementById('verifyOverlay').classList.add('active');
+
+      try {
+        const { data: existingClaims } = await supabaseClient
+          .from('claims')
+          .select('order_id')
+          .in('order_id', orderIds);
+
+        if (existingClaims && existingClaims.length > 0) {
+          document.getElementById('verifyOverlay').classList.remove('active');
+          const claimedList = existingClaims.map(c => c.order_id).join(", ");
+          alert(`The following Order ID(s) have already been claimed: ${claimedList}`);
+          return;
+        }
+
+        const calculatedCoins = calculateCoinsFromAmount(totalAmount);
+        const perOrderAmount = totalAmount / orderIds.length;
+        const perOrderCoins = Math.floor(calculatedCoins / orderIds.length);
+
+        const insertPayload = orderIds.map(id => ({
+          user_id: currentUser.id,
+          store: storeName,
+          order_id: id,
+          order_date: orderDate,
+          amount: perOrderAmount,
+          coins: perOrderCoins,
+          status: 'Processing'
+        }));
+
+        const { error } = await supabaseClient.from('claims').insert(insertPayload);
+        if (error) throw error;
+
+        document.getElementById('verifyOverlay').classList.remove('active');
+        
+        alert(`Claim submitted!\nStatus: Processing\nExpected Coins: ${calculatedCoins}\n\nAdmin will verify. Coins will appear in your wallet after approval.`);
+        
+        document.getElementById('rewardForm').reset();
+        document.getElementById('orderIdsContainer').innerHTML = `
+          <div class="order-input-row">
+            <input type="text" class="form-control order-id-field" placeholder="e.g. OD3029104829100000" required>
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('verifyOverlay').classList.remove('active');
+        console.error("Claim Error:", err);
+        alert("Unable to process claim. Please check if any of these Order IDs were already claimed.");
+      }
+    });
+
+    let currentPaymentType = 'upi';
+    function setPaymentType(type) {
+      currentPaymentType = type;
+      if (type === 'upi') {
+        document.getElementById('pmUpiBtn').classList.add('active');
+        document.getElementById('pmBankBtn').classList.remove('active');
+        document.getElementById('upiForm').style.display = 'block';
+        document.getElementById('bankForm').style.display = 'none';
+      } else {
+        document.getElementById('pmBankBtn').classList.add('active');
+        document.getElementById('pmUpiBtn').classList.remove('active');
+        document.getElementById('bankForm').style.display = 'block';
+        document.getElementById('upiForm').style.display = 'none';
+      }
+    }
+
+    async function savePaymentDetails(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      let type, details;
+      if (currentPaymentType === 'upi') {
+        const upiVal = document.getElementById('upiInput').value.trim();
+        if (!upiVal.includes('@')) { alert("Please enter a valid UPI ID."); return; }
+        type = 'UPI';
+        details = `UPI: ${upiVal}`;
+      } else {
+        const name = document.getElementById('bankNameInput').value.trim();
+        const acc = document.getElementById('bankAccInput').value.trim();
+        const ifsc = document.getElementById('bankIfscInput').value.trim().toUpperCase();
+        if (!name || !acc || !ifsc) { alert("Please fill all bank details."); return; }
+        type = 'BANK';
+        details = `Bank: ${acc} (${name}, IFSC: ${ifsc})`;
+      }
+
+      const { error } = await supabaseClient.from('payment_details').insert([{
+        user_id: currentUser.id,
+        type: type,
+        details: details
+      }]);
+
+      if (error) {
+        alert("Failed to save payment method. Please try again.");
+        return;
+      }
+
+      // clear forms
+      document.getElementById('upiInput').value = '';
+      document.getElementById('bankNameInput').value = '';
+      document.getElementById('bankAccInput').value = '';
+      document.getElementById('bankIfscInput').value = '';
+
+      await loadUserData();
+      alert("Payment method added successfully!");
+    }
+
+   async function deletePaymentMethod(id) {
+  if (!confirm("Delete this payment method?")) return;
+
+  const { error } = await supabaseClient
+    .from('payment_details')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', currentUser.id);
+
+  if (error) {
+    console.error("Delete error:", error);
+    alert("Failed to delete: " + (error.message || "Please try again."));
+    return;
+  }
+  paymentMethods = paymentMethods.filter(pm => String(pm.id) !== String(id));
+  renderPaymentMethodsList();
+  updatePmStatusText();
+  await loadUserData();
+}
+
+    async function processWithdrawal() {
+      if (!currentUser) return;
+      const coinsToWithdraw = parseInt(document.getElementById('withdrawCoinsInput').value);
+      const { unlocked } = getCoinsBreakdown();
+      const selectedPmId = document.getElementById('withdrawPmSelect').value;
+
+      if (!selectedPmId) { alert("Please select a payment method."); return; }
+      if (unlocked < 5000) { alert("Minimum 5,000 unlocked coins required for withdrawal."); return; }
+      if (!coinsToWithdraw || coinsToWithdraw < 5000) { alert("Please enter at least 5,000 coins."); return; }
+      if (coinsToWithdraw > unlocked) { alert(`You only have ${unlocked} unlocked coins available.`); return; }
+
+      const selectedPm = paymentMethods.find(pm => String(pm.id) === String(selectedPmId));
+      if (!selectedPm) { alert("Selected payment method not found."); return; }
+
+      closeModal('walletModal');
+
+      const historyId = 'WD' + Math.floor(100000 + Math.random() * 900000);
+      const rupeesVal = (coinsToWithdraw / 50).toFixed(2);
+
+      document.getElementById('verifyStepText').innerText = "Submitting withdrawal...";
+      document.getElementById('verifySubText').innerText = "Please wait";
+      document.getElementById('verifyOverlay').classList.add('active');
+
+      const { error } = await supabaseClient.from('withdrawals').insert([{
+        id: historyId,
+        user_id: currentUser.id,
+        coins: coinsToWithdraw,
+        rupees: rupeesVal,
+        details: selectedPm.details,
+        status: 'Processing'
+      }]);
+
+      document.getElementById('verifyOverlay').classList.remove('active');
+
+      if (error) {
+        console.error(error);
+        alert("Request failed. Please try again.");
+      } else {
+        // Immediately update local withdrawn total so UI reflects deduction
+        totalWithdrawnCoins += coinsToWithdraw;
+        updateWalletUI();
+
+        alert(`Withdrawal request submitted.\nRequest ID: ${historyId}\nStatus: Processing\n\nCoins have been deducted from your available balance.`);
+        await loadUserData(); // re-sync from DB
+        showWalletView('history');
+        openModal('walletModal');
+      }
+    }
+
+    async function renderHistory() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = `<div style="font-size:0.8rem;color:var(--text-sub);text-align:center;padding:15px;">Loading...</div>`;
+      const { data, error } = await supabaseClient
+        .from('withdrawals')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+      if (error || !data || data.length === 0) {
+        historyList.innerHTML = `<div style="font-size:0.8rem;color:var(--text-sub);text-align:center;padding:15px;">No transactions found.</div>`;
+        return;
+      }
+      historyList.innerHTML = data.map(item => `
+        <div class="history-item">
+          <div>
+            <div style="font-weight:700;">${item.coins} Coins (₹${item.rupees})</div>
+            <div style="font-size:0.7rem;color:var(--text-sub);">${new Date(item.created_at).toLocaleString([], {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'})} · ${item.id}</div>
+            <div style="font-size:0.68rem;color:#64748B;margin-top:2px;">${item.details || ''}</div>
+          </div>
+          <div>
+            ${item.status === 'Processing' ? '<span class="badge-processing">Processing</span>' :
+              item.status === 'Success' ? '<span class="badge-success">Success</span>' :
+              '<span class="badge-rejected">Rejected</span>'}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function updateProfile(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+      const name = document.getElementById('profileName').value.trim();
+      const phone = document.getElementById('profilePhone').value.trim();
+      if (name.length < 2 || !/^[A-Za-z\s]+$/.test(name)) { alert("Name must contain only letters and be at least 2 characters."); return; }
+      if (!/^[6-9]\d{9}$/.test(phone)) { alert("Enter a valid 10-digit Indian mobile number."); return; }
+      const { error } = await supabaseClient.from('profiles').upsert({
+        id: currentUser.id,
+        full_name: name,
+        phone: phone,
+        email: currentUser.email,
+        updated_at: new Date().toISOString()
+      });
+      if (error) {
+        alert("Unable to update profile. Please try again.");
+      } else {
+        const firstLetter = name.charAt(0).toUpperCase();
+        document.getElementById('userAvatar').innerText = firstLetter;
+        document.getElementById('userAvatarMobile').innerText = firstLetter;
+        alert("Profile updated successfully.");
+        closeModal('profileModal');
+      }
+    }
+
+    async function handleLogout() {
+      if (claimsChannel) {
+        supabaseClient.removeChannel(claimsChannel);
+        claimsChannel = null;
+      }
+      await supabaseClient.auth.signOut();
+      currentUser = null;
+      userOrders = [];
+      paymentMethods = [];
+      totalWithdrawnCoins = 0;
+      setLoggedInUI(false);
+      updateWalletUI();
+      closeModal('profileModal');
+      alert("Logged out successfully.");
+    }
+
+    // Strong fallback - every 4 seconds
+    setInterval(() => {
+      if (currentUser) {
+        loadUserData();
+      }
+    }, 4000);
+
+    initAuth();
+  </script>
+</body>
+</html>
