@@ -3,26 +3,26 @@
 
   <!-- Main Shop / Rewards Portal -->
   <url>
-    <loc>https://the50bazar.com/index.html</loc>
+    <loc>https://the50bazar.vercel.app/index.html</loc>
     <lastmod>2026-03-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
-  <!-- User Authentication (Login & Signup) -->
+  <!-- Login Page -->
   <url>
-    <loc>https://the50bazar.com/login.html</loc>
+    <loc>https://the50bazar.vercel.app/login.html</loc>
     <lastmod>2026-03-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
 
-  <!-- Super Admin Panel -->
+  <!-- Signup Page -->
   <url>
-    <loc>https://the50bazar.com/admin.html</loc>
+    <loc>https://the50bazar.vercel.app/signup.html</loc>
     <lastmod>2026-03-09</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.3</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
 </urlset>
